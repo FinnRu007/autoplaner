@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Autoplaner</title>
+  <meta name="description" content="Wer fährt wann welches Auto?">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Autoplaner">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="mock-banner" class="mock-banner" hidden>Testmodus – Beispieldaten, nur auf diesem Gerät</div>
+
+  <header class="topbar">
+    <div class="brand"><span class="brand-icon">🚗</span> Autoplaner</div>
+    <button id="who" class="chip" type="button" aria-label="Namen ändern"></button>
+  </header>
+
+  <main>
+    <!-- Tagesansicht -->
+    <section id="view-day" class="view">
+      <div class="datebar">
+        <button id="prev-day" class="icon-btn" type="button" aria-label="Vorheriger Tag">‹</button>
+        <label class="date-label">
+          <span id="date-text"></span>
+          <input id="date-input" type="date" aria-label="Datum wählen">
+        </label>
+        <button id="next-day" class="icon-btn" type="button" aria-label="Nächster Tag">›</button>
+      </div>
+      <button id="today-btn" class="today-btn" type="button" hidden>Zurück zu heute</button>
+
+      <div id="now-strip" class="now-strip"></div>
+
+      <div class="grid-wrap">
+        <div class="grid-head" id="grid-head"></div>
+        <div class="grid-scroll" id="grid-scroll">
+          <div class="grid" id="grid"></div>
+        </div>
+        <div class="loading-bar" id="loading" hidden></div>
+      </div>
+    </section>
+
+    <!-- Liste -->
+    <section id="view-list" class="view" hidden>
+      <div class="segmented" role="tablist">
+        <button type="button" data-filter="mine" class="active">Meine</button>
+        <button type="button" data-filter="all">Alle</button>
+      </div>
+      <div id="list" class="list"></div>
+    </section>
+  </main>
+
+  <button id="fab" class="fab" type="button"><span>+</span> Auto buchen</button>
+
+  <nav class="tabbar">
+    <button type="button" data-view="day" class="active"><span class="tab-ico">📅</span>Tag</button>
+    <button type="button" data-view="list"><span class="tab-ico">📋</span>Buchungen</button>
+  </nav>
+
+  <!-- Buchen / Ändern -->
+  <div id="sheet-form" class="sheet-backdrop" hidden>
+    <form class="sheet" id="form" novalidate>
+      <div class="sheet-grip"></div>
+      <div class="sheet-head">
+        <h2 id="form-title">Auto buchen</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Schließen">✕</button>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Wann?</span>
+        <div class="time-row">
+          <label>Von<input id="f-start" type="datetime-local" step="900" required></label>
+          <label>Bis<input id="f-end" type="datetime-local" step="900" required></label>
+        </div>
+        <div class="quick">
+          <button type="button" data-dur="60">1 Std</button>
+          <button type="button" data-dur="120">2 Std</button>
+          <button type="button" data-dur="240">4 Std</button>
+          <button type="button" data-dur="day">Ganzer Tag</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Welches Auto?</span>
+        <div class="car-tiles" id="car-tiles"></div>
+      </div>
+
+      <label class="field">
+        <span class="field-label">Notiz <small>(optional)</small></span>
+        <input id="f-note" type="text" maxlength="200" placeholder="z. B. Einkaufen, Arbeit, Training">
+      </label>
+
+      <div id="form-error" class="error" hidden></div>
+
+      <button id="form-submit" class="primary" type="submit">Buchen</button>
+    </form>
+  </div>
+
+  <!-- Details -->
+  <div id="sheet-detail" class="sheet-backdrop" hidden>
+    <div class="sheet">
+      <div class="sheet-grip"></div>
+      <div class="sheet-head">
+        <h2 id="d-title"></h2>
+        <button type="button" class="icon-btn" data-close aria-label="Schließen">✕</button>
+      </div>
+      <dl class="detail" id="d-body"></dl>
+      <div class="row-buttons">
+        <button type="button" id="d-delete" class="danger">Löschen</button>
+        <button type="button" id="d-edit" class="primary">Ändern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Name -->
+  <div id="sheet-name" class="welcome" hidden>
+    <form class="welcome-card" id="name-form" novalidate>
+      <img src="icons/icon-192.png" alt="" width="88" height="88">
+      <h1>Autoplaner</h1>
+      <p>Plane, wer wann welches Auto nimmt.</p>
+      <label class="field">
+        <span class="field-label">Wie heißt du?</span>
+        <input id="name-input" type="text" maxlength="40" autocomplete="given-name" placeholder="Dein Name">
+      </label>
+      <button class="primary" type="submit">Los geht's</button>
+    </form>
+  </div>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="config.js"></script>
+  <script src="logic.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
