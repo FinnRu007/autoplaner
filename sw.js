@@ -1,6 +1,6 @@
 // Service Worker: hält die App offline startbar. Erst Netz, dann Cache,
 // damit Änderungen an der App sofort bei allen ankommen.
-var CACHE = 'autoplaner-v1';
+var CACHE = 'autoplaner-v2';
 var SHELL = [
   './', './index.html', './styles.css', './app.js', './logic.js', './config.js',
   './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'
@@ -19,7 +19,8 @@ self.addEventListener('activate', function (e) {
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
-  e.respondWith(fetch(req).then(function (res) {
+  // no-cache: beim Server nachfragen, ob es eine neue Version gibt (sonst bis zu 10 Min. alte Dateien)
+  e.respondWith(fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }).then(function (res) {
     if (res.ok) {
       var copy = res.clone();
       caches.open(CACHE).then(function (c) { c.put(req, copy); });

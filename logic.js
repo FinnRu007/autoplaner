@@ -130,4 +130,68 @@ function assignable(block) {
   return place(0);
 }
 
+/* ---------- Wiederholungen ---------- */
+
+var MAX_SERIES = 100;
+var MAX_SERIES_DAYS = 183;
+var REPEAT_RULES = {
+  daily: 'Jeden Tag',
+  weekdays: 'Werktags (Mo–Fr)',
+  weekly: 'Jede Woche',
+  biweekly: 'Alle 2 Wochen',
+  monthly: 'Jeden Monat'
+};
+
+/**
+ * Alle Termine einer Wiederholung, gerechnet in der Ortszeit (bleibt über die
+ * Sommer-/Winterzeit hinweg bei derselben Uhrzeit). until = letzter erlaubter Tag.
+ */
+function expandRepeat(start, end, rule, until) {
+  var dur = end - start, base = new Date(start), out = [];
+  var last = new Date(until);
+  last.setHours(23, 59, 59, 999);
+  var step = rule === 'weekly' ? 7 : rule === 'biweekly' ? 14 : 1;
+  for (var n = 0; n < 400 && out.length < MAX_SERIES; n++) {
+    var d;
+    if (rule === 'monthly') {
+      d = new Date(base.getFullYear(), base.getMonth() + n, base.getDate(), base.getHours(), base.getMinutes());
+    } else {
+      d = new Date(base.getTime());
+      d.setDate(base.getDate() + n * step);
+    }
+    if (d > last) break;
+    if (rule === 'monthly' && d.getDate() !== base.getDate()) continue; // z. B. kein 31. im Monat
+    if (rule === 'weekdays' && (d.getDay() === 0 || d.getDay() === 6)) continue;
+    out.push({ start: d.getTime(), end: d.getTime() + dur });
+  }
+  return out;
+}
+
+function validateSeries(occurrences) {
+  if (!occurrences || !occurrences.length) return 'In diesem Zeitraum gibt es keinen Termin.';
+  if (occurrences.length > MAX_SERIES) return 'Eine Serie darf höchstens ' + MAX_SERIES + ' Termine haben.';
+  for (var i = 0; i < occurrences.length; i++) {
+    if (!isFinite(occurrences[i].start) || !isFinite(occurrences[i].end)) return 'Ungültige Termine.';
+  }
+  var first = occurrences[0].start, lastStart = occurrences[occurrences.length - 1].start;
+  if (lastStart - first > MAX_SERIES_DAYS * 864e5) return 'Eine Serie darf höchstens 6 Monate lang sein.';
+  return null;
+}
+
+/**
+ * Prüft jeden Termin einer Serie gegen die bestehenden Buchungen und die
+ * vorherigen Termine derselben Serie. Gibt { accepted, conflicts } zurück.
+ */
+function planSeries(base, occurrences, existing, fmt) {
+  var accepted = [], conflicts = [];
+  occurrences.forEach(function (o, i) {
+    var b = { id: 'neu-' + i, car: base.car, person: base.person, note: base.note, start: o.start, end: o.end };
+    var invalid = validateBooking(b);
+    var c = invalid ? { message: invalid } : checkBooking(b, existing.concat(accepted), fmt);
+    if (c) conflicts.push({ start: o.start, message: c.message });
+    else accepted.push(b);
+  });
+  return { accepted: accepted, conflicts: conflicts };
+}
+
 /* ===== AUTOPLANER-LOGIK ENDE ===== */
